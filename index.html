@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Supermarket - marketabc</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h2 { color: #2e7d32; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f1f1f1; }
+    form { margin-bottom: 16px; }
+    input, select { margin-right: 8px; }
+    img { max-width: 60px; max-height: 60px; }
+    .container { max-width: 900px; margin: auto; }
+    .section { margin-bottom: 40px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Supermarket Database (marketabc)</h1>
+    <div class="section" id="productos-section">
+      <h2>Productos</h2>
+      <form id="form-productos">
+        <input type="text" id="prod-nombre" placeholder="Nombre" required>
+        <input type="text" id="prod-categoria" placeholder="Categoría" required>
+        <input type="number" id="prod-precio" placeholder="Precio" min="0" step="0.01" required>
+        <input type="url" id="prod-imagen" placeholder="URL de Imagen (opcional)">
+        <button type="submit">Agregar Producto</button>
+      </form>
+      <table id="productos-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Imagen</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="section" id="clientes-section">
+      <h2>Clientes</h2>
+      <form id="form-clientes">
+        <input type="text" id="cli-nombre" placeholder="Nombre" required>
+        <input type="text" id="cli-email" placeholder="Email" required>
+        <input type="text" id="cli-telefono" placeholder="Teléfono" required>
+        <button type="submit">Agregar Cliente</button>
+      </form>
+      <table id="clientes-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Nombre</th><th>Email</th><th>Teléfono</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="section" id="proveedores-section">
+      <h2>Proveedores</h2>
+      <form id="form-proveedores">
+        <input type="text" id="prov-nombre" placeholder="Nombre" required>
+        <input type="text" id="prov-contacto" placeholder="Contacto" required>
+        <button type="submit">Agregar Proveedor</button>
+      </form>
+      <table id="proveedores-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Nombre</th><th>Contacto</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="section" id="inventario-section">
+      <h2>Inventario</h2>
+      <form id="form-inventario">
+        <select id="inv-prod-id" required></select>
+        <input type="number" id="inv-cantidad" placeholder="Cantidad" min="0" required>
+        <button type="submit">Agregar Inventario</button>
+      </form>
+      <table id="inventario-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Producto</th><th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    // --- Utility ---
+    function getData(key) {
+      return JSON.parse(localStorage.getItem(key) || "[]");
+    }
+    function setData(key, arr) {
+      localStorage.setItem(key, JSON.stringify(arr));
+    }
+    function nextId(arr) {
+      return arr.length ? Math.max(...arr.map(x => x.id)) + 1 : 1;
+    }
+
+    // --- Productos ---
+    function renderProductos() {
+      const productos = getData('productos');
+      const tbody = document.querySelector('#productos-table tbody');
+      tbody.innerHTML = productos.map(p =>
+        `<tr>
+          <td>${p.id}</td>
+          <td>${p.nombre}</td>
+          <td>${p.categoria}</td>
+          <td>$${p.precio}</td>
+          <td>${p.imagen ? `<img src="${p.imagen}" alt="Imagen"/>` : ''}</td>
+        </tr>`
+      ).join('');
+      // For Inventario select
+      const prodSelect = document.getElementById('inv-prod-id');
+      prodSelect.innerHTML = productos.map(p =>
+        `<option value="${p.id}">${p.nombre}</option>`
+      ).join('');
+    }
+
+    document.getElementById('form-productos').onsubmit = function(e) {
+      e.preventDefault();
+      const productos = getData('productos');
+      productos.push({
+        id: nextId(productos),
+        nombre: document.getElementById('prod-nombre').value,
+        categoria: document.getElementById('prod-categoria').value,
+        precio: parseFloat(document.getElementById('prod-precio').value).toFixed(2),
+        imagen: document.getElementById('prod-imagen').value
+      });
+      setData('productos', productos);
+      this.reset();
+      renderProductos();
+      renderInventario(); // Update for new product
+    };
+
+    // --- Clientes ---
+    function renderClientes() {
+      const clientes = getData('clientes');
+      const tbody = document.querySelector('#clientes-table tbody');
+      tbody.innerHTML = clientes.map(c =>
+        `<tr>
+          <td>${c.id}</td>
+          <td>${c.nombre}</td>
+          <td>${c.email}</td>
+          <td>${c.telefono}</td>
+        </tr>`
+      ).join('');
+    }
+
+    document.getElementById('form-clientes').onsubmit = function(e) {
+      e.preventDefault();
+      const clientes = getData('clientes');
+      clientes.push({
+        id: nextId(clientes),
+        nombre: document.getElementById('cli-nombre').value,
+        email: document.getElementById('cli-email').value,
+        telefono: document.getElementById('cli-telefono').value
+      });
+      setData('clientes', clientes);
+      this.reset();
+      renderClientes();
+    };
+
+    // --- Proveedores ---
+    function renderProveedores() {
+      const proveedores = getData('proveedores');
+      const tbody = document.querySelector('#proveedores-table tbody');
+      tbody.innerHTML = proveedores.map(p =>
+        `<tr>
+          <td>${p.id}</td>
+          <td>${p.nombre}</td>
+          <td>${p.contacto}</td>
+        </tr>`
+      ).join('');
+    }
+
+    document.getElementById('form-proveedores').onsubmit = function(e) {
+      e.preventDefault();
+      const proveedores = getData('proveedores');
+      proveedores.push({
+        id: nextId(proveedores),
+        nombre: document.getElementById('prov-nombre').value,
+        contacto: document.getElementById('prov-contacto').value
+      });
+      setData('proveedores', proveedores);
+      this.reset();
+      renderProveedores();
+    };
+
+    // --- Inventario ---
+    function renderInventario() {
+      const inventario = getData('inventario');
+      const productos = getData('productos');
+      const tbody = document.querySelector('#inventario-table tbody');
+      tbody.innerHTML = inventario.map(i => {
+        const prod = productos.find(p => p.id == i.productoId);
+        return `<tr>
+          <td>${i.id}</td>
+          <td>${prod ? prod.nombre : 'Producto eliminado'}</td>
+          <td>${i.cantidad}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    document.getElementById('form-inventario').onsubmit = function(e) {
+      e.preventDefault();
+      const inventario = getData('inventario');
+      inventario.push({
+        id: nextId(inventario),
+        productoId: document.getElementById('inv-prod-id').value,
+        cantidad: document.getElementById('inv-cantidad').value
+      });
+      setData('inventario', inventario);
+      this.reset();
+      renderInventario();
+    };
+
+    // Initial render
+    renderProductos();
+    renderClientes();
+    renderProveedores();
+    renderInventario();
+  </script>
+</body>
+</html>
